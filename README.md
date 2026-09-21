@@ -1,11 +1,11 @@
-# Dorj — App Store for Windows
+# Dorj — Smart app store & auto installer for Windows
 
-Smart installer & manager for Windows applications.
+Discover, install, bundle, and manage your Windows applications.
 
 ## Stack
-- Backend: FastAPI + SQLAlchemy + SQLite
-- Frontend: Tauri + React
-- Auth: JWT
+- **Backend:** FastAPI + SQLAlchemy + SQLite
+- **Frontend:** Tauri + React
+- **Auth:** JWT
 
 ## Status
 🚧 In development
