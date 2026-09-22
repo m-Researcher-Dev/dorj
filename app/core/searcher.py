@@ -272,7 +272,7 @@ def _parse_anchors(
         title = a.get_text(strip=True)
         href = a.get("href", "")
         if title and href:
-            out.append((title, href))
+            out.append((title, "".join(href)))
     return out
 
 

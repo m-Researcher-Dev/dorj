@@ -1,21 +1,5 @@
 __pycache__/
 *.pyc
 .venv/
-venv/
-.env
-*.db
-*.sqlite
-.DS_Store
-.vscode/
-.idea/
-
-# Personal
-Doucuments/
+.pytest_cache/
 .obsidian/
-
-# Obsidian
-.obsidian/
-.DS_Store
-
-# Personal notes
-Doucuments/**/.obsidian/
