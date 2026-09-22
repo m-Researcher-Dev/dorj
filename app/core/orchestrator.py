@@ -68,7 +68,7 @@ async def find(
 
 if __name__ == "__main__":
     async def main() -> None:
-        user_system = SystemInfo(arch="x64", os_version="11")
+        user_system = SystemInfo(arch="x86")
         results = await find("photoshop", system=user_system)
         print(f"{len(results)} link(s):")
         for link in results:
