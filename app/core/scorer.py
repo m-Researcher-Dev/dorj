@@ -9,6 +9,18 @@ from app.core.extractor import DownloadLink
 
 
 # --------------------------------------------------------------------------- #
+# System info (from client)
+# --------------------------------------------------------------------------- #
+
+@dataclass(frozen=True)
+class SystemInfo:
+    """Client machine description used to filter downloads."""
+    os: str = "windows"
+    arch: str = "x64"
+    os_version: str = "11"
+
+
+# --------------------------------------------------------------------------- #
 # Patterns
 # --------------------------------------------------------------------------- #
 
@@ -111,7 +123,6 @@ def _classify(link: DownloadLink) -> Classified:
 
     is_portable = _has_any(haystack, _PORTABLE_KEYWORDS)
 
-    # reject: کلمه‌های ممنوعه OR پلتفرم غیر ویندوز
     is_rejected = (
         _has_any(haystack, _REJECT_KEYWORDS)
         or platform in _REJECTED_PLATFORMS
@@ -126,6 +137,13 @@ def _classify(link: DownloadLink) -> Classified:
         is_portable=is_portable,
         is_rejected=is_rejected,
     )
+
+
+def _arch_ok(link_arch: str, user_arch: str) -> bool:
+    """Reject only explicit mismatches; unknown is allowed."""
+    if link_arch == "unknown":
+        return True
+    return link_arch == user_arch
 
 
 # --------------------------------------------------------------------------- #
@@ -186,15 +204,7 @@ def _score_group(query: str, group: list[Classified]) -> float:
     elif first.platform == "android":
         score -= 300.0
 
-    # ۵. معماری
-    if first.arch == "x64":
-        score += 30.0
-    elif first.arch == "x86":
-        score += 10.0
-    elif first.arch == "arm64":
-        score -= 50.0
-
-    # ۶. پرتابل نامطلوب
+    # ۵. پرتابل نامطلوب
     if first.is_portable:
         score -= 300.0
 
@@ -205,24 +215,37 @@ def _score_group(query: str, group: list[Classified]) -> float:
 # Public API
 # --------------------------------------------------------------------------- #
 
-def rank(query: str, links: list[DownloadLink]) -> list[DownloadLink]:
+def rank(
+    query: str,
+    links: list[DownloadLink],
+    system: SystemInfo | None = None,
+) -> list[DownloadLink]:
     """Select and return the best group of download links.
 
     Multi-part files (``.part1.rar``, ``.part2.rar``, ...) are grouped
     by their common prefix and returned together, ordered by part number.
 
     Args:
-        query: original search query (used to check filename relevance).
+        query: original search query.
         links: list of DownloadLink from extractor.
+        system: client machine info. Defaults to windows/x64/11.
 
     Returns:
-        The winning group's links, or an empty list if none pass the
-        minimum query-match threshold.
+        The winning group's links, or empty list if none pass.
     """
+    if system is None:
+        system = SystemInfo()
+
     if not links:
         return []
 
     classified = [_classify(link) for link in links]
+
+    # فقط لینک‌هایی که برای معماری سیستم کاربر مناسبند
+    classified = [c for c in classified if _arch_ok(c.arch, system.arch)]
+
+    if not classified:
+        return []
 
     groups: dict[str, list[Classified]] = {}
     for c in classified:
@@ -282,9 +305,10 @@ if __name__ == "__main__":
     }
 
     async def main() -> None:
+        system = SystemInfo(arch="x64", os_version="11")
         for site, url in URLS.items():
             links = await extract(url, site)
-            best = rank("photoshop", links)
+            best = rank("photoshop", links, system)
             print(f"\n=== {site} ===")
             print(f"  extracted: {len(links)}  →  selected: {len(best)}")
             for link in best:
