@@ -328,8 +328,9 @@ def _filter(
             continue
 
         out.append(Result(score=s, title=title, url=url))
-    return out
 
+    out.sort(key=lambda r: r.score, reverse=True)
+    return out
 
 # --------------------------------------------------------------------------- #
 # Public API
